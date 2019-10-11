@@ -5,7 +5,7 @@ import scala.collection.immutable.Seq
 import scala.concurrent.forkjoin.ThreadLocalRandom
 import akka.actor.{ ActorRef, Props }
 import play.api.libs.json.Json
-import play.extras.geojson.{ LineString, LatLng, FeatureCollection }
+import au.id.jazzy.play.geojson.{ LineString, LatLng, FeatureCollection }
 import play.api.Logger
 import actors.GeoJsonBot
 import java.net.URL

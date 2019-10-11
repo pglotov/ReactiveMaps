@@ -1,15 +1,33 @@
 import ByteConversions._
 
+scalaVersion := "2.11.12"
+
+resolvers += "Typesafe" at "http://repo.typesafe.com/typesafe/releases/"
+resolvers += Resolver.bintrayRepo("jroper", "maven")
+
 name := "reactive-maps"
 organization in ThisBuild := "com.typesafe"
 version := "1.0-SNAPSHOT"
 licenses := Seq("Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0"))
 
-resolvers += "Typesafe repository" at "http://repo.typesafe.com/typesafe/releases/"
+libraryDependencies += guice
 
 libraryDependencies ++= Seq(
-  TypesafeLibrary.akkaOrganization %% "akka-contrib" % "2.3.11",
-  "com.typesafe.play.extras" %% "play-geojson" % "1.3.0",
+  "com.typesafe.play" %% "play" % "2.7.3",
+  //"com.typesafe.play" %% "play-json" % "2.7.3",
+
+  "au.id.jazzy" %% "play-geojson" % "1.6.0",
+
+  "com.typesafe.akka" %% "akka-cluster" % "2.5.25",
+  "com.typesafe.akka" %% "akka-cluster-tools" % "2.5.25",
+  "com.typesafe.akka" %% "akka-contrib" % "2.5.25",
+  "com.typesafe.akka" %% "akka-remote" % "2.5.25",
+
+  "com.typesafe.akka" %% "akka-slf4j" % "2.5.25",
+  "ch.qos.logback" % "logback-classic" % "1.2.3",
+
+  "com.typesafe.conductr" %% "akka25-conductr-bundle-lib" % "2.2.0",
+  //"com.google.inject" % "guice" % "4.0",
   "org.webjars" % "bootstrap" % "3.0.0",
   "org.webjars" % "knockout" % "2.3.0",
   "org.webjars" % "requirejs" % "2.1.11-1",
@@ -17,6 +35,7 @@ libraryDependencies ++= Seq(
   "org.webjars" % "rjs" % "2.1.11-1-trireme" % "test",
   "org.webjars" % "squirejs" % "0.1.0" % "test"
 )
+
 
 routesGenerator := InjectedRoutesGenerator
 
@@ -44,6 +63,9 @@ BundleKeys.endpoints := Map(
   "akka-remote" -> Endpoint("tcp", 0)
 )
 
+BundleKeys.nrOfCpus := 0.1
+BundleKeys.memory := 1384.MiB
+BundleKeys.diskSpace := 200.MB
 BundleKeys.roles := Set("dmz")
 BundleKeys.startCommand += "-Dakka.cluster.roles.1=frontend"
 
@@ -79,12 +101,8 @@ inConfig(BackendSummary)(Seq(
 
 // Bundle publishing configuration
 
-inConfig(Bundle)(Seq(
-  bintrayVcsUrl := Some("https://github.com/typesafehub/ReactiveMaps"),
-  bintrayOrganization := Some("typesafe")
-))
-BintrayBundle.settings(BackendRegion)
-BintrayBundle.settings(BackendSummary)
+//BintrayBundle.settings(BackendRegion)
+//BintrayBundle.settings(BackendSummary)
 
 
 // Root project

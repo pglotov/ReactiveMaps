@@ -17,7 +17,7 @@ object RegionManagerClient {
  */
 class RegionManagerClient extends Actor {
 
-  val regionManagerRouter = context.actorOf(Props.empty.withRouter(FromConfig), "router")
+  val regionManagerRouter = context.actorOf(FromConfig.props(Props.empty), "router")
 
   val settings = Settings(context.system)
 

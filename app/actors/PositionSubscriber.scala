@@ -2,9 +2,9 @@ package actors
 
 import scala.collection.immutable.Seq
 import akka.actor.{ActorRef, Actor, ActorLogging, Props}
-import akka.contrib.pattern.DistributedPubSubExtension
-import akka.contrib.pattern.DistributedPubSubMediator.Subscribe
-import akka.contrib.pattern.DistributedPubSubMediator.Unsubscribe
+import akka.cluster.pubsub.DistributedPubSub
+import akka.cluster.pubsub.DistributedPubSubMediator.Subscribe
+import akka.cluster.pubsub.DistributedPubSubMediator.Unsubscribe
 import models.backend._
 import backend.Settings
 
@@ -23,7 +23,7 @@ object PositionSubscriber {
 class PositionSubscriber(subscriber: ActorRef) extends Actor with ActorLogging {
   import PositionSubscriber._
 
-  val mediator = DistributedPubSubExtension(context.system).mediator
+  val mediator = DistributedPubSub(context.system).mediator
   val settings = Settings(context.system)
 
   /**

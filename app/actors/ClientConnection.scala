@@ -4,10 +4,9 @@ import javax.inject.{Named, Inject}
 
 import akka.actor.{ActorRef, Actor}
 import com.google.inject.assistedinject.Assisted
-import play.extras.geojson._
+import au.id.jazzy.play.geojson._
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
-import play.api.mvc.WebSocket.FrameFormatter
 import actors.PositionSubscriber.PositionSubscriberUpdate
 import models.backend._
 
@@ -17,7 +16,7 @@ object ClientConnection {
    * The factory interface for creating client connections
    */
   trait Factory {
-    def apply(email: String, upstream: ActorRef): Actor
+    def apply(email: String): ClientConnection
   }
 
   /**
@@ -44,9 +43,7 @@ object ClientConnection {
   /*
    * JSON serialisers/deserialisers for the above messages
    */
-
-  object ClientEvent {
-    implicit def clientEventFormat: Format[ClientEvent] = Format(
+  implicit val clientEventFormat: Format[ClientEvent] = Format(
       (__ \ "event").read[String].flatMap {
         case "user-positions" => UserPositions.userPositionsFormat.map(identity)
         case "viewing-area" => ViewingArea.viewingAreaFormat.map(identity)
@@ -60,20 +57,8 @@ object ClientConnection {
       }
     )
 
-    /**
-     * Formats WebSocket frames to be ClientEvents.
-     */
-    implicit def clientEventFrameFormatter: FrameFormatter[ClientEvent] = FrameFormatter.jsonFrame.transform(
-      clientEvent => Json.toJson(clientEvent),
-      json => Json.fromJson[ClientEvent](json).fold(
-        invalid => throw new RuntimeException("Bad client event on WebSocket: " + invalid),
-        valid => valid
-      )
-    )
-  }
-
   object UserPositions {
-    implicit def userPositionsFormat: Format[UserPositions] = (
+    implicit val userPositionsFormat: Format[UserPositions] = (
       (__ \ "event").format[String] ~
         (__ \ "positions").format[FeatureCollection[LatLng]]
       ).apply({
@@ -82,7 +67,7 @@ object ClientConnection {
   }
 
   object ViewingArea {
-    implicit def viewingAreaFormat: Format[ViewingArea] = (
+    implicit val viewingAreaFormat: Format[ViewingArea] = (
       (__ \ "event").format[String] ~
         (__ \ "area").format[Polygon[LatLng]]
       ).apply({
@@ -91,13 +76,16 @@ object ClientConnection {
   }
 
   object UserMoved {
-    implicit def userMovedFormat: Format[UserMoved] = (
+    implicit val userMovedFormat: Format[UserMoved] = (
       (__ \ "event").format[String] ~
         (__ \ "position").format[Point[LatLng]]
       ).apply({
       case ("user-moved", position) => UserMoved(position)
     }, userMoved => ("user-moved", userMoved.position))
   }
+
+  import akka.actor._
+  def props(out: ActorRef, email: String) = Props(new ClientConnection(out, email))
 
 }
 
@@ -108,7 +96,7 @@ object ClientConnection {
  * @param regionManagerClient The region manager client to send updates to
  */
 class ClientConnection @Inject() (@Named("regionManagerClient") regionManagerClient: ActorRef,
-                                  @Assisted email: String, @Assisted upstream: ActorRef) extends Actor {
+                                  @Assisted email: String) extends Actor {
 
   // Create the subscriber actor to subscribe to position updates
   val subscriber = context.actorOf(PositionSubscriber.props(self), "positionSubscriber")
@@ -144,8 +132,6 @@ class ClientConnection @Inject() (@Named("regionManagerClient") regionManagerCli
         },
         bbox = area.map(area => (area.southWest, area.northEast))
       ))
-
-      upstream ! userPositions
-
   }
+
 }

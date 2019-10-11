@@ -2,15 +2,20 @@ package controllers
 
 import javax.inject.Inject
 
-import akka.actor.Props
+import play.api.libs.json._
 import play.api.mvc._
-import actors.ClientConnection
-import play.api.Play.current
-import actors.ClientConnection.ClientEvent
+import play.api.libs.streams.ActorFlow
+import akka.actor.ActorSystem
+import akka.stream.Materializer
 
-class Application @Inject() (
-    clientConnectionFactory: ClientConnection.Factory
-) extends Controller {
+import actors.ClientConnection.{ClientEvent, clientEventFormat}
+import actors.ClientConnection
+
+import play.api.mvc.WebSocket.MessageFlowTransformer
+import akka.actor._
+
+class Application @Inject() (cc: ControllerComponents, clientConnectionFactory: ClientConnection.Factory) (
+    implicit system: ActorSystem, mat: Materializer) extends AbstractController(cc) {
 
   /**
    * The index page.
@@ -22,7 +27,14 @@ class Application @Inject() (
   /**
    * The WebSocket
    */
-  def stream(email: String) = WebSocket.acceptWithActor[ClientEvent, ClientEvent] { _ => upstream =>
-    Props(clientConnectionFactory(email, upstream))
+
+  //implicit val eventFormat = Json.format[ClientEvent]()
+
+  implicit val messageFlowTransformer = MessageFlowTransformer.jsonMessageFlowTransformer[ClientEvent, ClientEvent]
+
+  def stream(email: String) = WebSocket.accept[ClientEvent, ClientEvent] { request =>
+    ActorFlow.actorRef { out =>
+      Props(clientConnectionFactory(email))
+    }
   }
 }

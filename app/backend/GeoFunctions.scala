@@ -1,7 +1,7 @@
 package backend
 
 import scala.collection.immutable.IndexedSeq
-import play.extras.geojson.LatLng
+import au.id.jazzy.play.geojson.LatLng
 import models.backend._
 import scala.Some
 import models.backend.BoundingBox

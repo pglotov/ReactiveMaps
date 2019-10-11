@@ -17,7 +17,7 @@ import java.net.URL
  */
 class Actors extends AbstractModule with AkkaGuiceSupport {
 
-  def configure() = {
+  override def configure() = {
     // Bind the region manager client
     bindActor[RegionManagerClient]("regionManagerClient")
     // Bind the client connection factory
